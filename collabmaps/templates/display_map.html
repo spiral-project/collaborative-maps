@@ -1,0 +1,71 @@
+{% load l10n %}
+{% load static %}
+{% get_static_prefix as STATIC_PREFIX %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<style type="text/css">
+  html { height: 100% }
+  body { height: 100%; margin: 0; padding: 0 }
+  #map_canvas { height: 100%; width: 100% }
+  #controls { background-color: #fff; position: absolute; bottom:0; left:0 }
+</style>
+<script type="text/javascript"
+    src="http://maps.googleapis.com/maps/api/js?sensor=false">
+</script>
+<script type="text/javascript">
+  function initialize() {
+    var map = new google.maps.Map(document.getElementById("map_canvas"), {
+      zoom: 6,
+      center: new google.maps.LatLng(46.2276380, 2.2137490),
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    });
+
+     {% for place in places %}
+         var marker = new google.maps.Marker({
+            position: new google.maps.LatLng(
+              {{ place.latitude|unlocalize }},
+              {{ place.longitude|unlocalize }}),
+             map: map,
+             title:"{{ place.name }}",
+             icon: "{{ STATIC_PREFIX }}/{% if place.is_event %}event.png{% else %}place.png{% endif %}"
+         });
+
+         var infoWindow = new google.maps.InfoWindow({
+            content: "<h3>{{ place.name }}</h3>"
+            + "{{ place.address }}<br />"
+                {% if place.is_event %}
+                    {% if place.stop_date %}
+                    + "du {{ place.start_date }} au {{ place.stop_date }}"
+                    {% else %}
+                    + "le {{ place.start_date }}"
+                    {% endif %}
+                {% endif %}
+                    
+                + "<p>{{ place.description }}</p>"
+                {% if place.url %} + "<a href='{{ place.url }}'>site web</a>"{% endif %}
+         });
+
+         google.maps.event.addListener(marker, 'click', function(){
+            infoWindow.open(map, marker);
+         });
+     {% endfor %}
+  }
+
+</script>
+</head>
+<body onload="initialize()">
+  <div id="map_canvas" ></div>
+  <div id="controls">
+      <div>
+          <input type="checkbox" name="events" value="1" checked="checked"/>
+          <label for="events">Évènements</label>
+      </div>
+      <div>
+          <input type="checkbox" name="places" value="1" checked="checked"/>
+          <label for="events">Lieux permanents</label>
+      </div>
+  </div>
+</body>
+</html>
